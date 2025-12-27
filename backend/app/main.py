@@ -37,8 +37,9 @@ def read_root():
     }
 
 # API版本1路由注册
-from app.api.v1 import users, roles, permissions
+from app.api.v1 import users, roles, permissions, auth
 
 app.include_router(users.router, prefix="/api/v1/users", tags=["users"])
 app.include_router(roles.router, prefix="/api/v1/roles", tags=["roles"])
 app.include_router(permissions.router, prefix="/api/v1/permissions", tags=["permissions"])
+app.include_router(auth.router, prefix="/api/v1/auth", tags=["auth"])

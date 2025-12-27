@@ -1,16 +1,7 @@
 from sqlmodel import Session, select
-from passlib.context import CryptContext
 from app.models.user import User
 from app.schemas.user import UserCreate, UserUpdate
-
-# 密码加密上下文
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-def get_password_hash(password: str) -> str:
-    return pwd_context.hash(password)
-
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
+from app.core.security import get_password_hash, verify_password
 
 def get_user(db: Session, user_id: int) -> User | None:
     return db.get(User, user_id)

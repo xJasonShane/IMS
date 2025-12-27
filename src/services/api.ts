@@ -1,4 +1,10 @@
 import axios from 'axios';
+import { 
+  User, UserCreate, UserUpdate, 
+  Role, RoleCreate, RoleUpdate, 
+  Permission, PermissionCreate, PermissionUpdate,
+  LoginRequest, LoginResponse
+} from '../types/api';
 
 // 创建axios实例
 const apiClient = axios.create({
@@ -43,27 +49,27 @@ apiClient.interceptors.response.use(
 // 用户API
 export const userApi = {
   // 获取用户列表
-  getUsers: (params?: { skip?: number; limit?: number }) => {
+  getUsers: (params?: { skip?: number; limit?: number }): Promise<User[]> => {
     return apiClient.get('/users', { params });
   },
   
   // 获取单个用户
-  getUser: (id: number) => {
+  getUser: (id: number): Promise<User> => {
     return apiClient.get(`/users/${id}`);
   },
   
   // 创建用户
-  createUser: (data: any) => {
+  createUser: (data: UserCreate): Promise<User> => {
     return apiClient.post('/users', data);
   },
   
   // 更新用户
-  updateUser: (id: number, data: any) => {
+  updateUser: (id: number, data: UserUpdate): Promise<User> => {
     return apiClient.put(`/users/${id}`, data);
   },
   
   // 删除用户
-  deleteUser: (id: number) => {
+  deleteUser: (id: number): Promise<{ message: string }> => {
     return apiClient.delete(`/users/${id}`);
   },
 };
@@ -71,27 +77,27 @@ export const userApi = {
 // 角色API
 export const roleApi = {
   // 获取角色列表
-  getRoles: (params?: { skip?: number; limit?: number }) => {
+  getRoles: (params?: { skip?: number; limit?: number }): Promise<Role[]> => {
     return apiClient.get('/roles', { params });
   },
   
   // 获取单个角色
-  getRole: (id: number) => {
+  getRole: (id: number): Promise<Role> => {
     return apiClient.get(`/roles/${id}`);
   },
   
   // 创建角色
-  createRole: (data: any) => {
+  createRole: (data: RoleCreate): Promise<Role> => {
     return apiClient.post('/roles', data);
   },
   
   // 更新角色
-  updateRole: (id: number, data: any) => {
+  updateRole: (id: number, data: RoleUpdate): Promise<Role> => {
     return apiClient.put(`/roles/${id}`, data);
   },
   
   // 删除角色
-  deleteRole: (id: number) => {
+  deleteRole: (id: number): Promise<{ message: string }> => {
     return apiClient.delete(`/roles/${id}`);
   },
 };
@@ -99,27 +105,27 @@ export const roleApi = {
 // 权限API
 export const permissionApi = {
   // 获取权限列表
-  getPermissions: (params?: { skip?: number; limit?: number }) => {
+  getPermissions: (params?: { skip?: number; limit?: number }): Promise<Permission[]> => {
     return apiClient.get('/permissions', { params });
   },
   
   // 获取单个权限
-  getPermission: (id: number) => {
+  getPermission: (id: number): Promise<Permission> => {
     return apiClient.get(`/permissions/${id}`);
   },
   
   // 创建权限
-  createPermission: (data: any) => {
+  createPermission: (data: PermissionCreate): Promise<Permission> => {
     return apiClient.post('/permissions', data);
   },
   
   // 更新权限
-  updatePermission: (id: number, data: any) => {
+  updatePermission: (id: number, data: PermissionUpdate): Promise<Permission> => {
     return apiClient.put(`/permissions/${id}`, data);
   },
   
   // 删除权限
-  deletePermission: (id: number) => {
+  deletePermission: (id: number): Promise<{ message: string }> => {
     return apiClient.delete(`/permissions/${id}`);
   },
 };
@@ -127,12 +133,12 @@ export const permissionApi = {
 // 登录API
 export const authApi = {
   // 登录
-  login: (data: { username: string; password: string }) => {
-    return apiClient.post('/login', data);
+  login: (data: LoginRequest): Promise<LoginResponse> => {
+    return apiClient.post('/auth/login', data);
   },
   
   // 登出
-  logout: () => {
+  logout: (): void => {
     localStorage.removeItem('token');
   },
 };
