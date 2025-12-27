@@ -1,5 +1,13 @@
 // API类型定义
 
+// 分页响应类型
+export interface PaginatedResponse<T> {
+  items: T[];
+  total: number;
+  skip: number;
+  limit: number;
+}
+
 // 用户相关类型
 export interface User {
   id: number;
@@ -9,6 +17,7 @@ export interface User {
   is_active: boolean;
   is_superuser: boolean;
   role_id?: number;
+  role?: { id: number; name: string; };
 }
 
 export interface UserCreate {

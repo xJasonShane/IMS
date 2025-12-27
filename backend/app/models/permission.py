@@ -5,7 +5,7 @@ from app.models.role import RolePermission
 class Permission(SQLModel, table=True):
     __tablename__ = "permissions"
     
-    id: Optional[int] = Field(default=None, primary_key=True)
+    id: Optional[int] = Field(default=None, primary_key=True, index=True)  # 主键添加索引
     name: str = Field(index=True, unique=True, nullable=False)
     description: Optional[str] = Field(default=None)
     

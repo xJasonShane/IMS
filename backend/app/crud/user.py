@@ -1,31 +1,55 @@
-from sqlmodel import Session, select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlmodel import select
 from app.models.user import User
 from app.schemas.user import UserCreate, UserUpdate
 from app.core.security import get_password_hash, verify_password
 
-def get_user(db: Session, user_id: int) -> User | None:
-    return db.get(User, user_id)
+# 异步操作
+async def get_user_async(db: AsyncSession, user_id: int) -> User | None:
+    """根据用户ID获取用户"""
+    return await db.get(User, user_id)
 
-def get_user_by_username(db: Session, username: str) -> User | None:
+async def get_user_by_username_async(db: AsyncSession, username: str) -> User | None:
+    """根据用户名获取用户"""
     statement = select(User).where(User.username == username)
-    return db.exec(statement).first()
+    result = await db.execute(statement)
+    return result.scalar_one_or_none()
 
-def get_user_by_email(db: Session, email: str) -> User | None:
+async def get_user_by_email_async(db: AsyncSession, email: str) -> User | None:
+    """根据邮箱获取用户"""
     statement = select(User).where(User.email == email)
-    return db.exec(statement).first()
+    result = await db.execute(statement)
+    return result.scalar_one_or_none()
 
-def get_users(db: Session, skip: int = 0, limit: int = 100) -> list[User]:
+async def get_users_async(db: AsyncSession, skip: int = 0, limit: int = 100) -> dict:
+    """获取用户列表，支持分页"""
+    # 查询用户总数
+    count_statement = select(User).count()
+    count_result = await db.execute(count_statement)
+    total = count_result.scalar_one()
+    
+    # 查询用户列表
     statement = select(User).offset(skip).limit(limit)
-    return db.exec(statement).all()
+    result = await db.execute(statement)
+    users = result.scalars().all()
+    
+    # 返回包含总数和用户列表的字典
+    return {
+        "items": users,
+        "total": total,
+        "skip": skip,
+        "limit": limit
+    }
 
-def create_user(db: Session, user: UserCreate) -> User:
+async def create_user_async(db: AsyncSession, user: UserCreate) -> User:
+    """创建新用户"""
     # 检查用户名是否已存在
-    existing_user = get_user_by_username(db, username=user.username)
+    existing_user = await get_user_by_username_async(db, username=user.username)
     if existing_user:
         raise ValueError("Username already registered")
     
     # 检查邮箱是否已存在
-    existing_email = get_user_by_email(db, email=user.email)
+    existing_email = await get_user_by_email_async(db, email=user.email)
     if existing_email:
         raise ValueError("Email already registered")
     
@@ -43,13 +67,14 @@ def create_user(db: Session, user: UserCreate) -> User:
     
     # 保存到数据库
     db.add(db_user)
-    db.commit()
-    db.refresh(db_user)
+    await db.commit()
+    await db.refresh(db_user)
     return db_user
 
-def update_user(db: Session, user_id: int, user: UserUpdate) -> User:
+async def update_user_async(db: AsyncSession, user_id: int, user: UserUpdate) -> User:
+    """更新用户信息"""
     # 获取用户
-    db_user = get_user(db, user_id)
+    db_user = await get_user_async(db, user_id)
     if not db_user:
         raise ValueError("User not found")
     
@@ -65,19 +90,19 @@ def update_user(db: Session, user_id: int, user: UserUpdate) -> User:
         setattr(db_user, key, value)
     
     # 保存到数据库
-    db.add(db_user)
-    db.commit()
-    db.refresh(db_user)
+    await db.commit()
+    await db.refresh(db_user)
     return db_user
 
-def delete_user(db: Session, user_id: int) -> dict:
+async def delete_user_async(db: AsyncSession, user_id: int) -> dict:
+    """删除用户"""
     # 获取用户
-    db_user = get_user(db, user_id)
+    db_user = await get_user_async(db, user_id)
     if not db_user:
         raise ValueError("User not found")
     
     # 删除用户
-    db.delete(db_user)
-    db.commit()
+    await db.delete(db_user)
+    await db.commit()
     
     return {"message": "User deleted successfully"}

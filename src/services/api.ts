@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios';
 import { 
   User, UserCreate, UserUpdate, 
   Role, RoleCreate, RoleUpdate, 
@@ -9,11 +9,21 @@ import {
 // 创建axios实例
 const apiClient = axios.create({
   baseURL: '/api/v1',
-  timeout: 10000,
+  timeout: 15000, // 增加超时时间到15秒
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true, // 允许携带凭证
 });
+
+// 请求取消控制器，用于取消重复请求
+const pendingRequests = new Map<string, AbortController>();
+
+// 生成请求键
+const generateRequestKey = (config: AxiosRequestConfig): string => {
+  const { method, url, params, data } = config;
+  return `${method}:${url}:${JSON.stringify(params)}:${JSON.stringify(data)}`;
+};
 
 // 请求拦截器
 apiClient.interceptors.request.use(
@@ -23,6 +33,20 @@ apiClient.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    
+    // 取消重复请求
+    const requestKey = generateRequestKey(config);
+    if (pendingRequests.has(requestKey)) {
+      const controller = pendingRequests.get(requestKey);
+      controller?.abort();
+      pendingRequests.delete(requestKey);
+    }
+    
+    // 创建新的取消控制器
+    const controller = new AbortController();
+    config.signal = controller.signal;
+    pendingRequests.set(requestKey, controller);
+    
     return config;
   },
   (error) => {
@@ -32,24 +56,59 @@ apiClient.interceptors.request.use(
 
 // 响应拦截器
 apiClient.interceptors.response.use(
-  (response) => {
+  (response: AxiosResponse) => {
+    // 移除已完成的请求
+    const requestKey = generateRequestKey(response.config);
+    pendingRequests.delete(requestKey);
+    
     return response.data;
   },
-  (error) => {
-    // 处理错误响应
-    if (error.response?.status === 401) {
+  (error: AxiosError) => {
+    // 移除已完成的请求
+    if (error.config) {
+      const requestKey = generateRequestKey(error.config);
+      pendingRequests.delete(requestKey);
+    }
+    
+    // 处理取消请求错误
+    if (error.name === 'CanceledError') {
+      return Promise.reject(new Error('请求已取消'));
+    }
+    
+    // 处理网络错误
+    if (!error.response) {
+      return Promise.reject(new Error('网络错误，请检查网络连接'));
+    }
+    
+    // 处理HTTP错误
+    const status = error.response.status;
+    const message = error.response.data?.message || '请求失败';
+    
+    // 处理401未授权错误
+    if (status === 401) {
       // 未授权，清除token并跳转到登录页
       localStorage.removeItem('token');
       window.location.href = '/login';
     }
-    return Promise.reject(error.response?.data || error.message);
+    
+    // 处理429请求过多错误
+    if (status === 429) {
+      return Promise.reject(new Error('请求过于频繁，请稍后重试'));
+    }
+    
+    // 处理500服务器错误
+    if (status >= 500) {
+      return Promise.reject(new Error('服务器错误，请稍后重试'));
+    }
+    
+    return Promise.reject({ status, message });
   }
 );
 
 // 用户API
 export const userApi = {
   // 获取用户列表
-  getUsers: (params?: { skip?: number; limit?: number }): Promise<User[]> => {
+  getUsers: (params?: { skip?: number; limit?: number }): Promise<PaginatedResponse<User>> => {
     return apiClient.get('/users', { params });
   },
   
@@ -77,7 +136,7 @@ export const userApi = {
 // 角色API
 export const roleApi = {
   // 获取角色列表
-  getRoles: (params?: { skip?: number; limit?: number }): Promise<Role[]> => {
+  getRoles: (params?: { skip?: number; limit?: number }): Promise<PaginatedResponse<Role>> => {
     return apiClient.get('/roles', { params });
   },
   
@@ -105,7 +164,7 @@ export const roleApi = {
 // 权限API
 export const permissionApi = {
   // 获取权限列表
-  getPermissions: (params?: { skip?: number; limit?: number }): Promise<Permission[]> => {
+  getPermissions: (params?: { skip?: number; limit?: number }): Promise<PaginatedResponse<Permission>> => {
     return apiClient.get('/permissions', { params });
   },
   
