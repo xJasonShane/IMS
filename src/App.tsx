@@ -1,8 +1,7 @@
 import React, { Suspense, lazy } from 'react';
 import { ConfigProvider, Spin } from 'antd';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom';
 import zhCN from 'antd/locale/zh_CN';
 import './App.css';
 
@@ -143,8 +142,6 @@ function App() {
     <ConfigProvider locale={zhCN}>
       <QueryClientProvider client={queryClient}>
         <RouterProvider router={router} />
-        {/* 在开发环境下显示React Query Devtools */}
-        {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
       </QueryClientProvider>
     </ConfigProvider>
   );

@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from sqlmodel import Session
+from sqlmodel import select
+from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import timedelta
 from pydantic import BaseModel
-from app.core.database import get_db
+from app.core.database import get_async_db
 from app.core.config import settings
 from app.core.security import verify_password, create_access_token
 from app.models.user import User
@@ -19,12 +20,14 @@ class Token(BaseModel):
     user: UserResponse
 
 @router.post("/login", response_model=Token)
-def login(
+async def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     # 查找用户
-    user = db.query(User).filter(User.username == form_data.username).first()
+    statement = select(User).where(User.username == form_data.username)
+    result = await db.execute(statement)
+    user = result.scalar_one_or_none()
     
     # 验证用户和密码
     if not user or not verify_password(form_data.password, user.password):
@@ -49,9 +52,9 @@ def login(
     }
 
 # 获取当前用户
-def get_current_user(
+async def get_current_user(
     token: str = Depends(oauth2_scheme),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     from jose import JWTError, jwt
     
@@ -73,14 +76,17 @@ def get_current_user(
         raise credentials_exception
     
     # 查找用户
-    user = db.query(User).filter(User.id == user_id).first()
+    statement = select(User).where(User.id == user_id)
+    result = await db.execute(statement)
+    user = result.scalar_one_or_none()
+    
     if user is None:
         raise credentials_exception
     
     return user
 
 # 获取当前活跃用户
-def get_current_active_user(
+async def get_current_active_user(
     current_user: User = Depends(get_current_user)
 ):
     if not current_user.is_active:

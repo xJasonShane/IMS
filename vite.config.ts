@@ -1,19 +1,11 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import { visualizer } from 'rollup-plugin-visualizer'
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   return {
     plugins: [
       react(),
-      // 仅在分析模式下启用可视化插件
-      mode === 'analyze' && visualizer({
-        open: true,
-        gzipSize: true,
-        brotliSize: true,
-        filename: 'build/analyze/index.html'
-      })
     ],
     server: {
       port: 3000,

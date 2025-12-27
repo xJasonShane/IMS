@@ -1,21 +1,43 @@
-from sqlmodel import Session, select
+from sqlmodel import select
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.permission import Permission
 from app.schemas.permission import PermissionCreate, PermissionUpdate
 
-def get_permission(db: Session, permission_id: int) -> Permission | None:
-    return db.get(Permission, permission_id)
+# 异步操作
+async def get_permission_async(db: AsyncSession, permission_id: int) -> Permission | None:
+    """根据权限ID获取权限"""
+    return await db.get(Permission, permission_id)
 
-def get_permission_by_name(db: Session, name: str) -> Permission | None:
+async def get_permission_by_name_async(db: AsyncSession, name: str) -> Permission | None:
+    """根据权限名称获取权限"""
     statement = select(Permission).where(Permission.name == name)
-    return db.exec(statement).first()
+    result = await db.execute(statement)
+    return result.scalar_one_or_none()
 
-def get_permissions(db: Session, skip: int = 0, limit: int = 100) -> list[Permission]:
+async def get_permissions_async(db: AsyncSession, skip: int = 0, limit: int = 100) -> dict:
+    """获取权限列表，支持分页"""
+    # 查询权限总数
+    count_statement = select(Permission).count()
+    count_result = await db.execute(count_statement)
+    total = count_result.scalar_one()
+    
+    # 查询权限列表
     statement = select(Permission).offset(skip).limit(limit)
-    return db.exec(statement).all()
+    result = await db.execute(statement)
+    permissions = result.scalars().all()
+    
+    # 返回包含总数和权限列表的字典
+    return {
+        "items": permissions,
+        "total": total,
+        "skip": skip,
+        "limit": limit
+    }
 
-def create_permission(db: Session, permission: PermissionCreate) -> Permission:
+async def create_permission_async(db: AsyncSession, permission: PermissionCreate) -> Permission:
+    """创建新权限"""
     # 检查权限名称是否已存在
-    existing_permission = get_permission_by_name(db, name=permission.name)
+    existing_permission = await get_permission_by_name_async(db, name=permission.name)
     if existing_permission:
         raise ValueError("Permission name already exists")
     
@@ -27,13 +49,14 @@ def create_permission(db: Session, permission: PermissionCreate) -> Permission:
     
     # 保存到数据库
     db.add(db_permission)
-    db.commit()
-    db.refresh(db_permission)
+    await db.commit()
+    await db.refresh(db_permission)
     return db_permission
 
-def update_permission(db: Session, permission_id: int, permission: PermissionUpdate) -> Permission:
+async def update_permission_async(db: AsyncSession, permission_id: int, permission: PermissionUpdate) -> Permission:
+    """更新权限信息"""
     # 获取权限
-    db_permission = get_permission(db, permission_id)
+    db_permission = await get_permission_async(db, permission_id)
     if not db_permission:
         raise ValueError("Permission not found")
     
@@ -42,7 +65,7 @@ def update_permission(db: Session, permission_id: int, permission: PermissionUpd
     
     # 检查权限名称是否已存在
     if "name" in update_data:
-        existing_permission = get_permission_by_name(db, name=update_data["name"])
+        existing_permission = await get_permission_by_name_async(db, name=update_data["name"])
         if existing_permission and existing_permission.id != permission_id:
             raise ValueError("Permission name already exists")
     
@@ -51,19 +74,19 @@ def update_permission(db: Session, permission_id: int, permission: PermissionUpd
         setattr(db_permission, key, value)
     
     # 保存到数据库
-    db.add(db_permission)
-    db.commit()
-    db.refresh(db_permission)
+    await db.commit()
+    await db.refresh(db_permission)
     return db_permission
 
-def delete_permission(db: Session, permission_id: int) -> dict:
+async def delete_permission_async(db: AsyncSession, permission_id: int) -> dict:
+    """删除权限"""
     # 获取权限
-    db_permission = get_permission(db, permission_id)
+    db_permission = await get_permission_async(db, permission_id)
     if not db_permission:
         raise ValueError("Permission not found")
     
     # 删除权限
-    db.delete(db_permission)
-    db.commit()
+    await db.delete(db_permission)
+    await db.commit()
     
     return {"message": "Permission deleted successfully"}
