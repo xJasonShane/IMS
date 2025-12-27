@@ -189,6 +189,100 @@ export const permissionApi = {
   },
 };
 
+// 商品API
+export const productApi = {
+  // 获取商品列表
+  getProducts: (params?: { skip?: number; limit?: number }): Promise<PaginatedResponse<Product>> => {
+    return apiClient.get('/products', { params });
+  },
+  
+  // 获取单个商品
+  getProduct: (id: number): Promise<Product> => {
+    return apiClient.get(`/products/${id}`);
+  },
+  
+  // 创建商品
+  createProduct: (data: ProductCreate): Promise<Product> => {
+    return apiClient.post('/products', data);
+  },
+  
+  // 更新商品
+  updateProduct: (id: number, data: ProductUpdate): Promise<Product> => {
+    return apiClient.put(`/products/${id}`, data);
+  },
+  
+  // 删除商品
+  deleteProduct: (id: number): Promise<{ message: string }> => {
+    return apiClient.delete(`/products/${id}`);
+  },
+};
+
+// 仓库API
+export const warehouseApi = {
+  // 获取仓库列表
+  getWarehouses: (params?: { skip?: number; limit?: number }): Promise<PaginatedResponse<Warehouse>> => {
+    return apiClient.get('/products/warehouses', { params });
+  },
+  
+  // 获取单个仓库
+  getWarehouse: (id: number): Promise<Warehouse> => {
+    return apiClient.get(`/products/warehouses/${id}`);
+  },
+  
+  // 创建仓库
+  createWarehouse: (data: WarehouseCreate): Promise<Warehouse> => {
+    return apiClient.post('/products/warehouses', data);
+  },
+  
+  // 更新仓库
+  updateWarehouse: (id: number, data: WarehouseUpdate): Promise<Warehouse> => {
+    return apiClient.put(`/products/warehouses/${id}`, data);
+  },
+  
+  // 删除仓库
+  deleteWarehouse: (id: number): Promise<{ message: string }> => {
+    return apiClient.delete(`/products/warehouses/${id}`);
+  },
+};
+
+// 库存API
+export const inventoryApi = {
+  // 获取库存列表
+  getInventories: (params?: { skip?: number; limit?: number }): Promise<PaginatedResponse<Inventory>> => {
+    return apiClient.get('/products/inventories', { params });
+  },
+  
+  // 获取单个库存
+  getInventory: (id: number): Promise<Inventory> => {
+    return apiClient.get(`/products/inventories/${id}`);
+  },
+  
+  // 创建库存
+  createInventory: (data: InventoryCreate): Promise<Inventory> => {
+    return apiClient.post('/products/inventories', data);
+  },
+  
+  // 更新库存
+  updateInventory: (id: number, data: InventoryUpdate): Promise<Inventory> => {
+    return apiClient.put(`/products/inventories/${id}`, data);
+  },
+  
+  // 删除库存
+  deleteInventory: (id: number): Promise<{ message: string }> => {
+    return apiClient.delete(`/products/inventories/${id}`);
+  },
+  
+  // 商品入库
+  inbound: (productId: number, quantity: number): Promise<Inventory> => {
+    return apiClient.put(`/products/inventories/${productId}/inbound`, { quantity });
+  },
+  
+  // 商品出库
+  outbound: (productId: number, quantity: number): Promise<Inventory> => {
+    return apiClient.put(`/products/inventories/${productId}/outbound`, { quantity });
+  },
+};
+
 // 登录API
 export const authApi = {
   // 登录

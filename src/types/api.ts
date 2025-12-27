@@ -76,6 +76,79 @@ export interface PermissionUpdate {
   description?: string;
 }
 
+// 商品相关类型
+export interface Product {
+  id: number;
+  name: string;
+  code: string;
+  description?: string;
+  category?: string;
+  unit: string;
+  price: number;
+  cost: number;
+}
+
+export interface ProductCreate {
+  name: string;
+  code: string;
+  description?: string;
+  category?: string;
+  unit?: string;
+  price?: number;
+  cost?: number;
+}
+
+export interface ProductUpdate {
+  name?: string;
+  code?: string;
+  description?: string;
+  category?: string;
+  unit?: string;
+  price?: number;
+  cost?: number;
+}
+
+// 仓库相关类型
+export interface Warehouse {
+  id: number;
+  name: string;
+  location?: string;
+  description?: string;
+}
+
+export interface WarehouseCreate {
+  name: string;
+  location?: string;
+  description?: string;
+}
+
+export interface WarehouseUpdate {
+  name?: string;
+  location?: string;
+  description?: string;
+}
+
+// 库存相关类型
+export interface Inventory {
+  id: number;
+  product_id: number;
+  product: Product;
+  quantity: number;
+  warehouse_id?: number;
+  warehouse?: Warehouse;
+}
+
+export interface InventoryCreate {
+  product_id: number;
+  quantity: number;
+  warehouse_id?: number;
+}
+
+export interface InventoryUpdate {
+  quantity?: number;
+  warehouse_id?: number;
+}
+
 // 认证相关类型
 export interface LoginRequest {
   username: string;

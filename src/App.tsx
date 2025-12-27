@@ -10,6 +10,7 @@ const Login = lazy(() => import(/* webpackChunkName: "login" */ './pages/Login')
 const Dashboard = lazy(() => import(/* webpackChunkName: "dashboard" */ './pages/Dashboard'));
 const Users = lazy(() => import(/* webpackChunkName: "users" */ './pages/Users'));
 const Roles = lazy(() => import(/* webpackChunkName: "roles" */ './pages/Roles'));
+const Products = lazy(() => import(/* webpackChunkName: "products" */ './pages/Products'));
 
 // 创建QueryClient实例，优化缓存策略
 const queryClient = new QueryClient({
@@ -127,6 +128,27 @@ const router = createBrowserRouter([
           } 
         >
           <Roles />
+        </Suspense>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/products',
+    element: (
+      <ProtectedRoute>
+        <Suspense 
+          fallback={
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'center', 
+              alignItems: 'center', 
+              height: '100vh' 
+            }}>
+              <Spin size="large" />
+            </div>
+          } 
+        >
+          <Products />
         </Suspense>
       </ProtectedRoute>
     ),

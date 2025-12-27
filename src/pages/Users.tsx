@@ -12,13 +12,36 @@ const Users: React.FC = () => {
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const queryClient = useQueryClient();
 
-  // 使用useQuery获取用户列表，配置缓存策略
-  const { data: users = [], isLoading, error } = useQuery({
-    queryKey: ['users'],
-    queryFn: () => userApi.getUsers(),
+  // 分页状态
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 20,
+    total: 0
+  });
+
+  // 使用useQuery获取用户列表，配置缓存策略和分页
+  const { data: usersData = { items: [], total: 0 }, isLoading, error } = useQuery({
+    queryKey: ['users', pagination.current, pagination.pageSize],
+    queryFn: () => userApi.getUsers({ 
+      skip: (pagination.current - 1) * pagination.pageSize, 
+      limit: pagination.pageSize 
+    }),
     staleTime: 5 * 60 * 1000, // 5分钟内视为新鲜
     gcTime: 10 * 60 * 1000, // 10分钟后清理缓存
   });
+
+  // 分页变化处理
+  const handlePaginationChange = (page: number, pageSize: number) => {
+    setPagination(prev => ({
+      ...prev,
+      current: page,
+      pageSize
+    }));
+  };
+
+  // 提取用户列表和总数
+  const users = usersData.items;
+  const total = usersData.total;
 
   // 使用useMutation创建用户
   const createUserMutation = useMutation({
@@ -203,10 +226,14 @@ const Users: React.FC = () => {
           dataSource={users}
           loading={isLoading}
           rowKey="id"
-          pagination={{ 
-            pageSize: 10, 
+          pagination={{
+            current: pagination.current,
+            pageSize: pagination.pageSize,
+            total: total,
             showSizeChanger: true,
             showQuickJumper: true,
+            pageSizeOptions: ['10', '20', '50', '100'],
+            onChange: handlePaginationChange,
           }}
           scroll={{ x: 800 }} // 支持横向滚动，适应小屏幕
         />
